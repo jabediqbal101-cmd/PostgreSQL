@@ -28,7 +28,7 @@ HAVING COUNT(*) >= 2;
 
 --------------------------------
 
--- 3. WHERE + GROUP BY + HAVING
+WHERE + GROUP BY + HAVING
 
 -- এখন তিনটাকে একসাথে ব্যবহার করি।
 
@@ -547,6 +547,236 @@ ON users.id = orders.user_id;
 | Karim | NULL     |
 | Sadia | NULL     |
 | NULL  | Monitor  |
+
+
+
+JOIN + GROUP BY + HAVING 🔥
+
+
+
+যেসব user কমপক্ষে 2টা order করেছে, শুধু তাদের দেখাও।
+
+SELECT
+    users.name,
+    COUNT(orders.id) AS total_orders
+FROM users
+LEFT JOIN orders
+ON users.id = orders.user_id
+GROUP BY users.id, users.name
+HAVING COUNT(orders.id) >= 2;
+-------------------------------------
+
+JOIN + GROUP BY 🔥
+
+
+
+ধরো আমরা জানতে চাই:
+
+প্রতিটি user কতগুলো order করেছে?
+
+তাহলে:
+
+SELECT
+    users.name,
+    COUNT(orders.id) AS total_orders
+FROM users
+LEFT JOIN orders
+ON users.id = orders.user_id
+GROUP BY users.id, users.name;
+
+
+-------------------------------
+
+
+JOIN + WHERE + ORDER BY
+
+এবার তিনটা একসাথে:
+
+25+ বয়সের users-এর orders দেখাও এবং বয়স অনুযায়ী বড় থেকে ছোট সাজাও।
+
+SELECT
+    users.name,
+    users.age,
+    orders.product
+FROM users
+INNER JOIN orders
+ON users.id = orders.user_id
+WHERE users.age >= 25
+ORDER BY users.age DESC;
+
+-----------------------------------
+
+------------------------------------------------
+
+SUBQUERIES--
+
+একটা SQL query-এর ভিতরে আরেকটা SQL query থাকলে সেটাকে Subquery বলে
+
+-- আমরা চাই:
+
+-- সবচেয়ে বেশি বয়স যার, তার পুরো information দেখাও।
+
+
+
+
+
+
+
+-- আমরা জানি maximum age:
+
+-- 30
+
+-- তাহলে:
+
+SELECT *
+FROM users
+WHERE age = 30;
+
+-- এতে Tanvir পাওয়া যাবে।
+
+-- কিন্তু সমস্যা হলো—
+
+-- আমরা আগে থেকে জানি না maximum age কত।
+
+-- এখানেই Subquery আসবে।
+
+SELECT *
+FROM users
+WHERE age = (
+    SELECT MAX(age)
+    FROM users
+);
+
+এখানে দুইটা query আছে।
+
+
+    --          SUBQUERY
+    --             ↓
+    --    "আগে একটা value বের করো"
+    --             ↓
+    --     তারপর সেই value
+    --     বাইরের query-তে ব্যবহার করো
+
+  আরেকটা Example
+
+প্রশ্ন:
+
+Average age-এর চেয়ে বেশি বয়সের users দেখাও।
+
+প্রথমে average বের করি:
+
+SELECT AVG(age)
+FROM users;
+
+ধরো result:
+
+25.5
+
+তাহলে আমরা চাই:
+
+age > 25.5
+
+Subquery:
+
+SELECT *
+FROM users
+WHERE age > (
+    SELECT AVG(age)
+    FROM users
+);
+--------------
+
+NOT IN
+
+আগে আমরা করেছিলাম:
+
+SELECT *
+FROM users
+WHERE id IN (
+    SELECT user_id
+    FROM orders
+);
+
+-- এর অর্থ:
+
+-- যেসব user-এর order আছে, তাদের দেখাও।
+
+-- এখন যদি বলি:
+
+-- যেসব user-এর কোনো order নেই, তাদের দেখাও।
+
+-- তাহলে:
+
+SELECT *
+FROM users
+WHERE id NOT IN (
+    SELECT user_id
+    FROM orders
+);
+
+
+--------------------------------------
+
+EXISTS
+
+এখন একটু different concept।
+
+EXISTS জিজ্ঞেস করে:
+
+এই condition-এর matching row অন্তত একটা আছে কি?
+
+ধরো:
+
+যেসব user-এর অন্তত একটি order আছে তাদের দেখাও।
+
+SELECT *
+FROM users
+WHERE EXISTS (
+    SELECT 1
+    FROM orders
+    WHERE orders.user_id = users.id
+);
+
+এখানে:
+
+SELECT 1
+
+দেখে ভয় পাওয়ার কিছু নেই।
+
+EXISTS-এর ক্ষেত্রে আমরা আসলে value চাই না।
+
+আমরা শুধু জানতে চাই:
+
+কোনো matching row আছে?
+        ↓
+YES → TRUE
+NO  → FALSE
+
+-----------------------------------------------------
+
+Correlated Subquery 🔥
+
+-- এটা একটু বেশি important।
+
+-- Correlated Subquery হলো এমন subquery যেটা outer query-এর row-এর উপর নির্ভর করে।
+
+-- আমাদের আগের EXISTS query-টাই আসলে correlated subquery:
+
+-- SELECT *
+-- FROM users
+-- WHERE EXISTS (
+--     SELECT 1
+--     FROM orders
+--     WHERE orders.user_id = users.id
+-- );
+
+-- খেয়াল করো:
+
+-- users.id
+
+-- এই users.id এসেছে outer query থেকে।
+
+-- অর্থাৎ inner query নিজে নিজে independent না।
 
 
 
